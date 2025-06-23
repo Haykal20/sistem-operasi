@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Sistem Login - HaykalFS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --success-color: #2ecc71;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+    }
+    
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Notification */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      max-width: 350px;
+      display: none;
+    }
+    
+    /* Login Container */
+    .login-container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .login-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+    
+    .login-body {
+      padding: 25px;
+    }
+    
+    /* Form Styles */
+    .form-floating label {
+      color: #6c757d;
+    }
+    
+    .form-control:focus {
+      box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+      border-color: var(--primary-color);
+    }
+    
+    /* Button Styles */
+    .btn-login {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border: none;
+      padding: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Error Handling */
+    .error-message {
+      color: var(--accent-color);
+      font-size: 0.85rem;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .is-invalid {
+      border-color: var(--accent-color) !important;
+    }
+    
+    /* Dashboard Styles */
+    .dashboard-container {
+      display: none;
+    }
+    
+    .folder-icon {
+      font-size: 3rem;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .folder-card {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      text-align: center;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .folder-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .folder-card:hover .folder-icon {
+      transform: scale(1.1);
+    }
+    
+    /* Back Button */
+    .back-btn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 10;
+    }
+    
+    /* Animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    
+    .shake {
+      animation: shake 0.5s linear;
+    }
+    
+    /* Responsive */
+    @media (max-width: 576px) {
+      .login-container {
+        margin: 20px;
+      }
+      
+      .login-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .notification {
+        left: 20px;
+        right: 20px;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Notification -->
+  <div class="notification alert alert-success alert-dismissible fade show" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-check-circle me-2" style="font-size: 1.5rem;"></i>
+      <div>
+        <strong>Berhasil!</strong> Data telah disimpan.
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <!-- Login Form -->
+  <div class="container py-5" id="login-container">
+    <div class="login-container">
+      <div class="login-header">
+        <h2><i class="fas fa-user-lock me-2"></i>Login Sistem</h2>
+        <p class="mb-0">Masukkan username dan password</p>
+      </div>
+      <div class="login-body">
+        <!-- Notifikasi login -->
+        <div id="login-success-notif" class="alert alert-success d-none" role="alert">
+          <i class="fas fa-check-circle me-2"></i>
+          <span>Berhasil login! Selamat datang di sistem.</span>
+        </div>
+        <form id="loginForm">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="username" placeholder="Username" required>
+            <label for="username"><i class="fas fa-user me-2"></i>Username</label>
+            <div class="error-message" id="username-error">Username tidak valid</div>
+          </div>
+          <div class="form-floating mb-4">
+            <input type="password" class="form-control" id="password" placeholder="Password" required>
+            <label for="password"><i class="fas fa-key me-2"></i>Password</label>
+            <div class="error-message" id="password-error">Password salah</div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-login w-100 mb-3">
+            <i class="fas fa-sign-in-alt me-2"></i>LOGIN
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="container py-5 dashboard-container" id="dashboard-container">
+    <div class="text-center mb-5">
+      <h2><i class="fas fa-folder-open me-2"></i>Data Formulir</h2>
+      <p class="text-muted">Pilih kategori formulir yang ingin diisi</p>
+    </div>
+    
+    <div class="row" id="main-folder">
+      <div class="col-md-4">
+        <div class="folder-card" data-folder="personal">
+          <div class="folder-icon">
+            <i class="fas fa-user"></i>
+          </div>
+          <h5>Data Personal</h5>
+          <p class="text-muted">Informasi pribadi</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="folder-card" data-folder="education">
+          <div class="folder-icon">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <h5>Data Pendidikan</h5>
+          <p class="text-muted">Riwayat pendidikan</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="folder-card" data-folder="contact">
+          <div class="folder-icon">
+            <i class="fas fa-address-book"></i>
+          </div>
+          <h5>Kontak</h5>
+          <p class="text-muted">Informasi kontak</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Personal Data Form -->
+    <div class="row folder-content" id="personal-folder" style="display: none;">
+      <div class="col-12">
+        <button class="btn btn-outline-primary back-btn">
+          <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-user me-2"></i>Data Personal</h4>
+          </div>
+          <div class="card-body">
+            <form id="personalForm">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nama Lengkap</label>
+                  <input type="text" class="form-control" id="fullName" placeholder="Masukkan nama lengkap" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Jenis Kelamin</label>
+                  <select class="form-select" id="gender" required>
+                    <option value="" selected disabled>Pilih jenis kelamin</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Tanggal Lahir</label>
+                  <input type="date" class="form-control" id="birthDate" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Usia</label>
+                  <input type="number" class="form-control" id="age" placeholder="Masukkan usia" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Simpan Data
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Education Data Form -->
+    <div class="row folder-content" id="education-folder" style="display: none;">
+      <div class="col-12">
+        <button class="btn btn-outline-primary back-btn">
+          <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-graduation-cap me-2"></i>Data Pendidikan</h4>
+          </div>
+          <div class="card-body">
+            <form id="educationForm">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Jenjang Pendidikan</label>
+                  <select class="form-select" id="educationLevel" required>
+                    <option value="" selected disabled>Pilih jenjang</option>
+                    <option>SD</option>
+                    <option>SMP</option>
+                    <option>SMA</option>
+                    <option>Diploma</option>
+                    <option>Sarjana</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Nama Institusi</label>
+                  <input type="text" class="form-control" id="institution" placeholder="Nama sekolah/kampus" required>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Tahun Masuk</label>
+                  <input type="number" class="form-control" id="yearIn" placeholder="Tahun masuk" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tahun Lulus</label>
+                  <input type="number" class="form-control" id="yearOut" placeholder="Tahun lulus" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Simpan Data
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contact Data Form -->
+    <div class="row folder-content" id="contact-folder" style="display: none;">
+      <div class="col-12">
+        <button class="btn btn-outline-primary back-btn">
+          <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-address-book me-2"></i>Data Kontak</h4>
+          </div>
+          <div class="card-body">
+            <form id="contactForm">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" placeholder="Alamat email" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Nomor Telepon</label>
+                  <input type="tel" class="form-control" id="phone" placeholder="Nomor telepon" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Alamat Lengkap</label>
+                <textarea class="form-control" id="address" rows="3" placeholder="Alamat lengkap" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Simpan Data
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Data storage
+      const formData = {
+        personal: {},
+        education: {},
+        contact: {}
+      };
+      
+      // Show notification function
+      function showNotification(message, type = 'success') {
+        const notification = $('.notification');
+        notification.removeClass('alert-success alert-danger alert-warning');
+        
+        if (type === 'success') {
+          notification.addClass('alert-success');
+          notification.find('strong').text('Berhasil!');
+          notification.find('i').removeClass().addClass('fas fa-check-circle me-2');
+        } else if (type === 'error') {
+          notification.addClass('alert-danger');
+          notification.find('strong').text('Error!');
+          notification.find('i').removeClass().addClass('fas fa-exclamation-circle me-2');
+        }
+        
+        notification.find('div > div').html(message);
+        notification.fadeIn();
+        
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+          notification.fadeOut();
+        }, 3000);
+      }
+      
+      // Login Functionality
+      $('#loginForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const username = $('#username').val();
+        const password = $('#password').val();
+        
+        // Reset error states
+        $('.form-control').removeClass('is-invalid');
+        $('.error-message').hide();
+        $('#login-success-notif').addClass('d-none');
+
+        // Validation
+        let isValid = true;
+        
+        if(username !== 'haykalfs') {
+          $('#username').addClass('is-invalid');
+          $('#username-error').show();
+          isValid = false;
+        }
+        
+        if(password !== '20042005') {
+          $('#password').addClass('is-invalid');
+          $('#password-error').show();
+          isValid = false;
+        }
+        
+        if(!isValid) {
+          $('#loginForm').addClass('shake');
+          setTimeout(() => {
+            $('#loginForm').removeClass('shake');
+          }, 500);
+          return;
+        }
+        
+        // Login successful: tampilkan notif di login, delay 2 detik, lalu masuk dashboard
+        $('#login-success-notif').removeClass('d-none');
+        setTimeout(function() {
+          $('#login-success-notif').addClass('d-none');
+          $('#login-container').fadeOut(400, function() {
+            $('#dashboard-container').fadeIn();
+          });
+        }, 2000);
+      });
+      
+      // Folder Navigation
+      $('.folder-card').on('click', function() {
+        const folder = $(this).data('folder');
+        $('#main-folder').fadeOut(300, function() {
+          $(`#${folder}-folder`).fadeIn();
+        });
+      });
+      
+      // Back Button
+      $('.back-btn').on('click', function() {
+        $('.folder-content').fadeOut(300, function() {
+          $('#main-folder').fadeIn();
+        });
+      });
+      
+      // Form Submission - Personal Data
+      $('#personalForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        formData.personal = {
+          fullName: $('#fullName').val(),
+          gender: $('#gender').val(),
+          birthDate: $('#birthDate').val(),
+          age: $('#age').val()
+        };
+        
+        showNotification('Data personal berhasil disimpan');
+        $(this)[0].reset();
+        setTimeout(function() {
+          $('.folder-content').fadeOut(300, function() {
+            $('#main-folder').fadeIn();
+          });
+        }, 2000);
+      });
+      
+      // Form Submission - Education Data
+      $('#educationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        formData.education = {
+          educationLevel: $('#educationLevel').val(),
+          institution: $('#institution').val(),
+          yearIn: $('#yearIn').val(),
+          yearOut: $('#yearOut').val()
+        };
+        
+        showNotification('Data pendidikan berhasil disimpan');
+        $(this)[0].reset();
+        setTimeout(function() {
+          $('.folder-content').fadeOut(300, function() {
+            $('#main-folder').fadeIn();
+          });
+        }, 2000);
+      });
+      
+      // Form Submission - Contact Data
+      $('#contactForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        formData.contact = {
+          email: $('#email').val(),
+          phone: $('#phone').val(),
+          address: $('#address').val()
+        };
+        
+        showNotification('Data kontak berhasil disimpan');
+        $(this)[0].reset();
+        setTimeout(function() {
+          $('.folder-content').fadeOut(300, function() {
+            $('#main-folder').fadeIn();
+          });
+        }, 2000);
+      });
+      
+      // Close notification when clicking close button
+      $('.notification .btn-close').on('click', function() {
+        $(this).closest('.notification').fadeOut();
+      });
+    });
+  </script>
+</body>
+</html>
